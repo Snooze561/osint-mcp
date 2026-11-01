@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>osint-mcp</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">◎</span>
+      <span>osint-mcp</span>
+    </div>
+    <p class="tagline">Boîte à outils OSINT locale</p>
+  </header>
+
+  <div class="layout">
+    <nav class="tools" aria-label="Outils">
+      <div id="tool-list"></div>
+    </nav>
+
+    <main class="main">
+      <section class="panel">
+        <h1 id="tool-title">Choisis un outil</h1>
+        <p id="tool-description" class="muted"></p>
+
+        <form id="text-form" class="search" autocomplete="off">
+          <input id="text-input" type="text" required aria-label="Valeur à rechercher">
+          <button type="submit" id="text-submit">Rechercher</button>
+        </form>
+
+        <form id="file-form" class="search" hidden>
+          <label class="file-drop" id="file-drop">
+            <input id="file-input" type="file" accept="image/*,.heic,.tif,.tiff" required>
+            <span id="file-label">Choisis une photo ou glisse-la ici</span>
+          </label>
+          <button type="submit" id="file-submit">Analyser</button>
+        </form>
+
+        <p class="notice">
+          N'utilise ces outils que sur toi-même, sur des personnes ou organisations
+          consentantes, ou dans un cadre autorisé (CTF, audit, exercice).
+        </p>
+      </section>
+
+      <section class="panel" id="result-panel" hidden>
+        <div class="result-head">
+          <h2 id="result-title">Résultat</h2>
+          <div class="result-actions">
+            <button type="button" class="ghost" id="toggle-raw">JSON brut</button>
+            <button type="button" class="ghost" id="copy-raw">Copier</button>
+          </div>
+        </div>
+        <div id="result"></div>
+        <pre id="raw" hidden></pre>
+      </section>
+    </main>
+
+    <aside class="history" aria-label="Historique">
+      <div class="history-head">
+        <h2>Historique</h2>
+        <button type="button" class="ghost small" id="clear-history">Vider</button>
+      </div>
+      <ul id="history-list"></ul>
+    </aside>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
