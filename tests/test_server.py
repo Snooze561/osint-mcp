@@ -29,3 +29,19 @@ async def test_invalid_input_returns_an_error():
     async with Client(mcp) as client:
         result = await client.call_tool("recherche_domaine", {"domaine": "pas un domaine"})
     assert result.is_error
+
+
+def test_http_security_on_localhost_is_left_to_the_sdk():
+    from osint_mcp.server import http_security
+
+    assert http_security("127.0.0.1") is None
+
+
+def test_http_security_in_docker(monkeypatch):
+    from osint_mcp.server import http_security
+
+    monkeypatch.setenv("OSINT_ALLOWED_HOSTS", "osint.exemple.fr:*")
+    settings = http_security("0.0.0.0")
+    assert settings.enable_dns_rebinding_protection
+    assert settings.allowed_hosts == ["127.0.0.1:*", "localhost:*", "osint.exemple.fr:*"]
+    assert "https://osint.exemple.fr" in settings.allowed_origins

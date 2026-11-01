@@ -1,0 +1,36 @@
+# Lance l'interface web et le serveur MCP en HTTP avec une seule commande :
+#
+#   docker compose up -d      (démarrer en arrière-plan)
+#   docker compose logs -f    (voir les journaux)
+#   docker compose down       (arrêter)
+#
+# Interface web : http://127.0.0.1:8000
+# Serveur MCP   : http://127.0.0.1:8001/mcp
+
+services:
+  web:
+    build: .
+    ports:
+      # "127.0.0.1:" = accessible seulement depuis cette machine.
+      # Sur un serveur, garde-le ainsi et passe par un reverse proxy avec
+      # mot de passe et HTTPS (voir le README) : l'appli n'a pas de connexion.
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - path: .env        # clés API (optionnel, voir .env.example)
+        required: false
+    volumes:
+      - osint-data:/data  # l'historique survit aux redémarrages
+    restart: unless-stopped
+
+  mcp:
+    build: .
+    command: ["osint-mcp", "--http", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "127.0.0.1:8001:8001"
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+
+volumes:
+  osint-data:
