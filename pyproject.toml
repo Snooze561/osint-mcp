@@ -12,6 +12,9 @@ dependencies = [
     "pillow>=10",        # lecture des images et de leurs métadonnées EXIF
     "holehe>=1.61",      # comptes liés à une adresse e-mail
     "python-dotenv>=1.0", # lecture des clés API dans le fichier .env
+    "fastapi>=0.115",     # interface web (API)
+    "uvicorn>=0.30",      # serveur web qui fait tourner FastAPI
+    "python-multipart>=0.0.9", # envoi de fichiers (photos) depuis le navigateur
 ]
 
 [project.optional-dependencies]
@@ -19,6 +22,7 @@ dev = ["pytest>=8", "pytest-asyncio>=0.23"]
 
 [project.scripts]
 osint-mcp = "osint_mcp.server:main"
+osint-web = "osint_mcp.web.app:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -70,6 +70,28 @@ uv sync --extra dev
 uv run pytest
 ```
 
+## L'interface web
+
+Les mêmes outils sont aussi disponibles dans ton navigateur, sans passer par Claude :
+
+```bash
+uv run osint-web
+```
+
+La page s'ouvre toute seule sur http://127.0.0.1:8000. Choisis un outil à
+gauche, tape ta recherche, et le résultat s'affiche sous forme de tableau
+lisible (ou en JSON brut). Tes recherches sont gardées dans l'historique à
+droite. Pour arrêter le serveur : `Ctrl+C` dans le terminal.
+
+![Interface web](docs/interface-web.png)
+
+- Le serveur n'écoute que sur `127.0.0.1` : il n'est accessible que depuis ton
+  ordinateur, pas depuis le réseau.
+- L'historique est enregistré dans `~/.osint-mcp/historique.db` (sous Windows :
+  `C:\Users\<toi>\.osint-mcp\`), jamais dans le dépôt Git.
+- Si le port 8000 est déjà pris : `uv run osint-web --port 8080`.
+- La documentation automatique de l'API est sur http://127.0.0.1:8000/api/docs.
+
 ## Clés API (optionnel)
 
 Deux outils peuvent utiliser une clé API. Sans clé, tout le reste fonctionne.
@@ -137,6 +159,10 @@ npx @modelcontextprotocol/inspector uv run osint-mcp
 src/osint_mcp/
 ├── server.py             ← le serveur MCP : déclare les outils pour Claude
 ├── config.py             ← lecture des clés API (fichier .env)
+├── web/                  ← l'interface web
+│   ├── app.py            ← l'API FastAPI qui appelle les outils
+│   ├── history.py        ← l'historique (base SQLite)
+│   └── static/           ← la page : index.html, style.css, app.js
 └── tools/                ← la logique OSINT, en Python "normal" (sans MCP)
     ├── domain.py         ← DNS + WHOIS
     ├── subdomains.py     ← sous-domaines via les certificats (crt.sh)
@@ -150,9 +176,10 @@ src/osint_mcp/
 tests/                  ← tests automatiques (aucun accès réseau réel)
 ```
 
-Pourquoi séparer `server.py` et `tools/` ? Parce que les fonctions de `tools/`
-ne dépendent pas de MCP : la future interface web pourra les réutiliser telles
-quelles.
+Pourquoi séparer `server.py`, `web/` et `tools/` ? Parce que les fonctions de
+`tools/` ne dépendent ni de MCP ni du web : le serveur MCP et l'interface web
+les réutilisent telles quelles. Pour ajouter un outil, on écrit la fonction une
+fois dans `tools/`, puis on la déclare dans `server.py` et dans `web/app.py`.
 
 ### Ce qu'il faut retenir sur MCP
 
@@ -181,7 +208,7 @@ le compte existe ou non :
 - [x] **Étape 1** : serveur MCP avec 4 outils sans clé API
 - [x] **Étape 2** : sous-domaines, analyse d'IP, comptes liés à un e-mail (holehe),
       fuites de données (HIBP), clés API dans `.env`
-- [ ] **Étape 3** : interface web locale (FastAPI)
+- [x] **Étape 3** : interface web locale (FastAPI) avec historique
 - [ ] **Étape 4** : image Docker pour tout lancer en une commande
 
 ## Limites connues
