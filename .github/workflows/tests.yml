@@ -18,3 +18,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --extra dev
       - run: uv run pytest
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire l'image
+        run: docker build -t osint-mcp .
+      - name: Vérifier que l'interface web et le serveur MCP démarrent
+        run: |
+          docker run -d --name web -p 127.0.0.1:8000:8000 osint-mcp
+          docker run -d --name mcp -p 127.0.0.1:8001:8001 osint-mcp \
+            osint-mcp --http --host 0.0.0.0 --port 8001
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/outils > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:8000/api/outils | grep -q recherche_domaine
+          # Le serveur MCP répond (406 = il attend un vrai client MCP, c'est normal).
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8001/mcp)
+          echo "MCP HTTP: $code"
+          test "$code" != "000"
+      - name: Journaux en cas d'échec
+        if: failure()
+        run: docker logs web; docker logs mcp

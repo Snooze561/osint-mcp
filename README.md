@@ -92,6 +92,60 @@ droite. Pour arrêter le serveur : `Ctrl+C` dans le terminal.
 - Si le port 8000 est déjà pris : `uv run osint-web --port 8080`.
 - La documentation automatique de l'API est sur http://127.0.0.1:8000/api/docs.
 
+## Docker : tout lancer en une commande
+
+Docker emballe l'application avec Python et toutes ses dépendances dans une
+« image ». Elle se lance ensuite de la même façon partout : sur ton PC
+aujourd'hui, sur un serveur demain. Il faut installer
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows,
+macOS) ou Docker Engine (Linux).
+
+```bash
+docker compose up -d       # construit l'image et démarre en arrière-plan
+docker compose logs -f     # voir les journaux (Ctrl+C pour quitter)
+docker compose down        # arrêter
+```
+
+Cela démarre deux services :
+
+| Service | Adresse | Rôle |
+|---|---|---|
+| `web` | http://127.0.0.1:8000 | l'interface web |
+| `mcp` | http://127.0.0.1:8001/mcp | le serveur MCP en HTTP (au lieu de stdio) |
+
+- Les clés API du fichier `.env` sont transmises automatiquement aux conteneurs.
+- L'historique est gardé dans un « volume » Docker (`osint-data`) : il survit
+  aux redémarrages. `docker compose down -v` l'efface.
+- Après une mise à jour du code : `docker compose up -d --build`.
+- Dans Docker, l'outil `metadonnees_image` du serveur MCP ne voit pas les
+  fichiers de ton PC. Pour les photos, utilise l'interface web (envoi de fichier).
+
+### Le serveur MCP en HTTP
+
+Sans Docker, le même mode se lance avec `uv run osint-mcp --http`. Pour le
+brancher sur Claude Desktop, on passe par le petit adaptateur `mcp-remote`
+(il faut Node.js) dans `claude_desktop_config.json` :
+
+```json
+"osint-http": {
+  "command": "npx",
+  "args": ["mcp-remote", "http://127.0.0.1:8001/mcp"]
+}
+```
+
+Pour un usage sur ton PC, le mode stdio décrit plus haut reste le plus simple.
+
+### Héberger sur un serveur (plus tard)
+
+L'application n'a **pas de système de connexion** : quiconque peut l'atteindre
+peut l'utiliser. C'est pour cela que `compose.yaml` ne l'ouvre qu'à
+`127.0.0.1`. Pour la rendre accessible depuis Internet, garde ces ports
+fermés et place devant un « reverse proxy » (par exemple
+[Caddy](https://caddyserver.com)) qui ajoute le HTTPS et un mot de passe.
+Pour le serveur MCP, ajoute ton nom de domaine dans `.env` :
+`OSINT_ALLOWED_HOSTS=osint.mondomaine.fr:*`, sinon il refuse les requêtes
+(protection contre le « DNS rebinding »).
+
 ## Clés API (optionnel)
 
 Deux outils peuvent utiliser une clé API. Sans clé, tout le reste fonctionne.
@@ -174,6 +228,8 @@ src/osint_mcp/
     ├── image.py          ← EXIF et GPS
     └── validation.py     ← nettoyage des domaines et e-mails saisis
 tests/                  ← tests automatiques (aucun accès réseau réel)
+Dockerfile              ← la recette de l'image Docker
+compose.yaml            ← lance l'interface web et le serveur MCP ensemble
 ```
 
 Pourquoi séparer `server.py`, `web/` et `tools/` ? Parce que les fonctions de
@@ -209,7 +265,11 @@ le compte existe ou non :
 - [x] **Étape 2** : sous-domaines, analyse d'IP, comptes liés à un e-mail (holehe),
       fuites de données (HIBP), clés API dans `.env`
 - [x] **Étape 3** : interface web locale (FastAPI) avec historique
-- [ ] **Étape 4** : image Docker pour tout lancer en une commande
+- [x] **Étape 4** : image Docker, `compose.yaml` et serveur MCP en HTTP
+
+Idées pour la suite : ajouter des sites à la recherche de pseudo, un outil de
+recherche d'image inversée, l'export des résultats en PDF, un mot de passe sur
+l'interface web pour l'héberger.
 
 ## Limites connues
 

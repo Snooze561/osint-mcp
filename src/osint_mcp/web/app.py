@@ -167,6 +167,10 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Interface web de osint-mcp")
     parser.add_argument("--port", type=int, default=8000, help="port web (8000 par défaut)")
+    parser.add_argument(
+        "--host", default="127.0.0.1",
+        help="adresse d'écoute (127.0.0.1 par défaut ; 0.0.0.0 dans Docker)",
+    )
     parser.add_argument("--sans-navigateur", action="store_true", help="ne pas ouvrir le navigateur")
     args = parser.parse_args()
 
@@ -175,4 +179,4 @@ def main() -> None:
     if not args.sans_navigateur:
         Timer(1.5, webbrowser.open, args=[url]).start()
     # 127.0.0.1 = accessible uniquement depuis ton ordinateur, pas depuis le réseau.
-    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
+    uvicorn.run(app, host=args.host, port=args.port, log_level="warning")

@@ -10,9 +10,13 @@ Par défaut le serveur communique en "stdio" : Claude Desktop lance ce
 programme et dialogue avec lui via l'entrée/sortie standard.
 """
 
+import argparse
+import os
+import sys
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .tools.breaches import email_breaches
 from .tools.domain import domain_lookup
@@ -136,9 +140,46 @@ async def fuites_email(email: str) -> dict[str, Any]:
     return await email_breaches(email)
 
 
+def http_security(host: str) -> TransportSecuritySettings | None:
+    """Protection contre le "DNS rebinding" quand le serveur écoute sur le réseau.
+
+    Le serveur n'accepte que les requêtes adressées à localhost, plus les noms
+    listés dans la variable OSINT_ALLOWED_HOSTS (ex. "osint.mondomaine.fr:*").
+    Sur 127.0.0.1, le SDK MCP active déjà cette protection tout seul.
+    """
+    if host in ("127.0.0.1", "localhost", "::1"):
+        return None
+    extra = [h.strip() for h in os.environ.get("OSINT_ALLOWED_HOSTS", "").split(",") if h.strip()]
+    return TransportSecuritySettings(
+        allowed_hosts=["127.0.0.1:*", "localhost:*", *extra],
+        allowed_origins=["http://127.0.0.1:*", "http://localhost:*",
+                         *(f"https://{h.removesuffix(':*')}" for h in extra)],
+    )
+
+
 def main() -> None:
-    """Lance le serveur (commande `osint-mcp`)."""
-    mcp.run()
+    """Lance le serveur (commande `osint-mcp`).
+
+    - `osint-mcp`        : mode stdio, pour Claude Desktop (par défaut) ;
+    - `osint-mcp --http` : mode HTTP, adresse http://127.0.0.1:8001/mcp, pour
+      un serveur qui tourne en continu (Docker, hébergement).
+    """
+    parser = argparse.ArgumentParser(description="Serveur MCP osint-mcp")
+    parser.add_argument("--http", action="store_true", help="servir en HTTP au lieu de stdio")
+    parser.add_argument("--host", default="127.0.0.1", help="adresse d'écoute en HTTP")
+    parser.add_argument("--port", type=int, default=8001, help="port en HTTP (8001 par défaut)")
+    args = parser.parse_args()
+
+    if not args.http:
+        mcp.run()
+        return
+    print(f"Serveur MCP en HTTP sur http://{args.host}:{args.port}/mcp", file=sys.stderr)
+    mcp.run(
+        transport="streamable-http",
+        host=args.host,
+        port=args.port,
+        transport_security=http_security(args.host),
+    )
 
 
 if __name__ == "__main__":
