@@ -10,6 +10,8 @@ dependencies = [
     "dnspython>=2.6",    # requêtes DNS
     "python-whois>=0.9", # requêtes WHOIS
     "pillow>=10",        # lecture des images et de leurs métadonnées EXIF
+    "holehe>=1.61",      # comptes liés à une adresse e-mail
+    "python-dotenv>=1.0", # lecture des clés API dans le fichier .env
 ]
 
 [project.optional-dependencies]
