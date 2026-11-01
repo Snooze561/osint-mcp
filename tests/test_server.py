@@ -10,7 +10,10 @@ async def test_server_exposes_the_tools():
     async with Client(mcp) as client:
         tools = await client.list_tools()
     names = {tool.name for tool in tools.tools}
-    assert names == {"recherche_domaine", "recherche_pseudo", "analyse_email", "metadonnees_image"}
+    assert names == {
+        "recherche_domaine", "recherche_pseudo", "analyse_email", "metadonnees_image",
+        "sous_domaines", "analyse_ip", "comptes_email", "fuites_email",
+    }
 
 
 async def test_call_image_tool(tmp_path):

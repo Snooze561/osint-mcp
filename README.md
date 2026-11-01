@@ -22,8 +22,12 @@ et Claude appelle tout seul le bon outil.
 | Outil MCP | Ce qu'il fait | Clé API |
 |---|---|---|
 | `recherche_domaine` | Enregistrements DNS (A, AAAA, MX, NS, TXT, SOA) et WHOIS (registrar, dates, organisation) | Non |
+| `sous_domaines` | Sous-domaines trouvés dans les certificats HTTPS publics (crt.sh) | Non |
+| `analyse_ip` | Localisation, propriétaire, DNS inverse, ports ouverts et vulnérabilités (ipinfo.io, Shodan InternetDB) | Optionnelle (Shodan, pour le détail des services) |
 | `recherche_pseudo` | Cherche un pseudo sur 16 sites (GitHub, GitLab, Reddit, Telegram, Steam, Bluesky, Mastodon, Chess.com...) | Non |
 | `analyse_email` | Serveurs MX, fournisseur de messagerie, adresse jetable, profil Gravatar public | Non |
+| `comptes_email` | Sites où l'adresse a un compte, parmi plus de 110 (avec [holehe](https://github.com/megadose/holehe)) | Non |
+| `fuites_email` | Fuites de données contenant l'adresse (Have I Been Pwned) | Oui (HIBP, payante) |
 | `metadonnees_image` | Métadonnées EXIF d'une photo : appareil, date, logiciel, **coordonnées GPS** | Non |
 
 ## Installation
@@ -66,6 +70,30 @@ uv sync --extra dev
 uv run pytest
 ```
 
+## Clés API (optionnel)
+
+Deux outils peuvent utiliser une clé API. Sans clé, tout le reste fonctionne.
+
+1. Copie le fichier `.env.example` en `.env`, dans le même dossier :
+   `copy .env.example .env` (Windows) ou `cp .env.example .env` (macOS/Linux).
+2. Ouvre `.env` et colle tes clés après le `=` :
+   - `SHODAN_API_KEY` : clé gratuite après inscription sur [account.shodan.io](https://account.shodan.io).
+   - `HIBP_API_KEY` : clé payante sur [haveibeenpwned.com/API/Key](https://haveibeenpwned.com/API/Key).
+3. Redémarre Claude Desktop.
+
+Le fichier `.env` est ignoré par Git : tes clés ne seront jamais publiées sur GitHub.
+
+## Mettre à jour
+
+Quand une nouvelle version arrive sur GitHub :
+
+```bash
+git pull
+uv sync --extra dev
+```
+
+puis redémarre Claude Desktop pour qu'il recharge le serveur.
+
 ## Brancher le serveur sur Claude Desktop
 
 1. Ouvre Claude Desktop, puis **Paramètres → Développeur → Modifier la config**.
@@ -83,7 +111,7 @@ uv run pytest
 }
 ```
 
-3. Redémarre Claude Desktop. Les 4 outils apparaissent dans le menu des outils
+3. Redémarre Claude Desktop. Les outils apparaissent dans le menu des outils
    (icône de prise ou de marteau) de la zone de saisie.
 
 > Astuce : si Claude Desktop ne trouve pas `uv`, remplace `"uv"` par son chemin
@@ -102,13 +130,18 @@ npx @modelcontextprotocol/inspector uv run osint-mcp
 
 ```
 src/osint_mcp/
-├── server.py           ← le serveur MCP : déclare les 4 outils pour Claude
-└── tools/              ← la logique OSINT, en Python "normal" (sans MCP)
-    ├── domain.py       ← DNS + WHOIS
-    ├── username.py     ← recherche de pseudo (liste des sites + règles)
-    ├── email.py        ← MX, fournisseur, jetable, Gravatar
-    ├── image.py        ← EXIF et GPS
-    └── validation.py   ← nettoyage des domaines et e-mails saisis
+├── server.py             ← le serveur MCP : déclare les outils pour Claude
+├── config.py             ← lecture des clés API (fichier .env)
+└── tools/                ← la logique OSINT, en Python "normal" (sans MCP)
+    ├── domain.py         ← DNS + WHOIS
+    ├── subdomains.py     ← sous-domaines via les certificats (crt.sh)
+    ├── ip.py             ← localisation, propriétaire, ports (ipinfo, Shodan)
+    ├── username.py       ← recherche de pseudo (liste des sites + règles)
+    ├── email.py          ← MX, fournisseur, jetable, Gravatar
+    ├── email_accounts.py ← comptes liés à un e-mail (holehe)
+    ├── breaches.py       ← fuites de données (Have I Been Pwned)
+    ├── image.py          ← EXIF et GPS
+    └── validation.py     ← nettoyage des domaines et e-mails saisis
 tests/                  ← tests automatiques (aucun accès réseau réel)
 ```
 
@@ -141,8 +174,8 @@ le compte existe ou non :
 ## Feuille de route
 
 - [x] **Étape 1** : serveur MCP avec 4 outils sans clé API
-- [ ] **Étape 2** : plus d'outils (sous-domaines via crt.sh, géolocalisation d'IP,
-      theHarvester, holehe, Shodan et Have I Been Pwned avec clés API dans `.env`)
+- [x] **Étape 2** : sous-domaines, analyse d'IP, comptes liés à un e-mail (holehe),
+      fuites de données (HIBP), clés API dans `.env`
 - [ ] **Étape 3** : interface web locale (FastAPI)
 - [ ] **Étape 4** : image Docker pour tout lancer en une commande
 
@@ -153,4 +186,9 @@ le compte existe ou non :
 - Un site peut changer son fonctionnement du jour au lendemain : un résultat
   « incertain » signifie souvent qu'il bloque les requêtes ou qu'une règle est
   à mettre à jour.
+- holehe n'est plus beaucoup mis à jour : une partie de ses modules ne
+  fonctionne plus et apparaît dans « non vérifiables ». Par discrétion, les
+  modules qui passent par la récupération de mot de passe sont désactivés.
+- La localisation d'une IP est approximative : c'est souvent la ville du
+  fournisseur d'accès, jamais l'adresse d'une personne.
 - Le WHOIS des domaines en `.fr` et de beaucoup de particuliers est anonymisé (RGPD).
