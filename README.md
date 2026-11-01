@@ -28,17 +28,19 @@ et Claude appelle tout seul le bon outil.
 
 ## Installation
 
-Il te faut **Python 3.11 ou plus** et **[uv](https://docs.astral.sh/uv/)**, un
-gestionnaire de projets Python moderne et rapide.
+Il te faut **Git** et **[uv](https://docs.astral.sh/uv/)**, un gestionnaire de
+projets Python moderne et rapide. Pas besoin d'installer Python toi-même :
+uv le télécharge si nécessaire.
 
-```bash
-# 1. Installer uv (une seule fois)
-#    Windows (PowerShell) :
+### Windows (PowerShell)
+
+```powershell
+# 1. Installer Git et uv (une seule fois), puis fermer et rouvrir PowerShell
+winget install --id Git.Git -e
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-#    macOS / Linux :
-curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2. Récupérer le projet
+cd $HOME
 git clone https://github.com/Snooze561/osint-mcp.git
 cd osint-mcp
 
@@ -46,6 +48,21 @@ cd osint-mcp
 uv sync --extra dev
 
 # 4. Vérifier que tout marche
+uv run pytest
+```
+
+Si `winget` n'est pas disponible, installe Git depuis https://git-scm.com/download/win.
+
+### macOS / Linux
+
+```bash
+# 1. Installer uv (une seule fois). Git est souvent déjà installé (commande `git --version`).
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2 à 4 : identiques
+git clone https://github.com/Snooze561/osint-mcp.git
+cd osint-mcp
+uv sync --extra dev
 uv run pytest
 ```
 
