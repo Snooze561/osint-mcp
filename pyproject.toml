@@ -1,0 +1,31 @@
+[project]
+name = "osint-mcp"
+version = "0.1.0"
+description = "Boîte à outils OSINT exposée via un serveur MCP"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=2.3,<3",       # SDK officiel du Model Context Protocol
+    "httpx>=0.27",       # requêtes HTTP asynchrones
+    "dnspython>=2.6",    # requêtes DNS
+    "python-whois>=0.9", # requêtes WHOIS
+    "pillow>=10",        # lecture des images et de leurs métadonnées EXIF
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+osint-mcp = "osint_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/osint_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
