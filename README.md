@@ -87,12 +87,17 @@ Le fichier `.env` est ignoré par Git : tes clés ne seront jamais publiées sur
 
 Quand une nouvelle version arrive sur GitHub :
 
-```bash
-git pull
-uv sync --extra dev
-```
+1. **Quitte complètement Claude Desktop** (sous Windows : clic droit sur son
+   icône près de l'horloge, puis Quitter). Sinon le serveur tourne encore et
+   Windows empêche uv de remplacer ses fichiers (« os error 32 »).
+2. Mets à jour :
 
-puis redémarre Claude Desktop pour qu'il recharge le serveur.
+   ```bash
+   git pull
+   uv sync --extra dev
+   ```
+
+3. Relance Claude Desktop.
 
 ## Brancher le serveur sur Claude Desktop
 
