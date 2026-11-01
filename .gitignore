@@ -1,0 +1,11 @@
+# Environnements Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# Secrets (clés API) : ne jamais les publier
+.env
